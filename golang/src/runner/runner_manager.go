@@ -7,6 +7,8 @@ import (
 	"sync"
 )
 
+var noop = func() error { return nil }
+
 type (
 	Runner interface {
 		Run(ctx context.Context) error
@@ -85,4 +87,9 @@ func InterruptCb(cb func()) Runner {
 	})
 }
 
-func Interrupt() Runner { return InterruptCb(func() {}) }
+// Add some utilities
+func Interrupt() Runner           { return InterruptCb(func() {}) }
+func Wait(rm RunnerManager) error { return rm.Wait(context.Background()) }
+func SimpleRunnerFunc(run func() error) Runner {
+	return TeardownRunnerFunc(run, noop)
+}

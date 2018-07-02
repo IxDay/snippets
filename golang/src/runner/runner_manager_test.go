@@ -66,7 +66,7 @@ func TestInterrupt(t *testing.T) {
 		rm := RunnerManager{Interrupt(), runner}
 
 		go func() {
-			err = rm.Wait(context.Background())
+			err = Wait(rm)
 			close(stop)
 		}()
 		<-start
@@ -85,8 +85,8 @@ func TestRunnerManager(t *testing.T) {
 		{misc, misc},
 	}
 	for _, entry := range entries {
-		rm := RunnerManager{RunnerFunc(func(_ context.Context) error { return entry.out })}
-		want, got := entry.err, rm.Wait(context.Background())
+		rm := RunnerManager{SimpleRunnerFunc(func() error { return entry.out })}
+		want, got := entry.err, Wait(rm)
 		CheckErrors(t, got, want)
 	}
 }
@@ -108,20 +108,22 @@ func (str *stubTeardownRunner) Teardown() error {
 
 func TestRunTeardownRunner(t *testing.T) {
 	var stub *stubTeardownRunner
-	var errRunner = RunnerFunc(func(_ context.Context) error { return nil })
+	var errRunner = SimpleRunnerFunc(func() error { return nil })
 	var errString = "TeardownRunner.Run(%q) = %t (run), %t (teardown) want: %t, %t"
 
 	// test without stopping (teardown not called)
 	stub = &stubTeardownRunner{}
-	CheckErrors(t, RunnerManager{RunTeardownRunner(stub)}.Wait(context.Background()), nil)
+	CheckErrors(t, Wait(RunnerManager{RunTeardownRunner(stub)}), nil)
 	if !stub.run || stub.teardown {
 		t.Errorf(errString, "no stop", stub.run, stub.teardown, true, false)
 	}
 
 	// test with stopping (teardown called)
 	stub = &stubTeardownRunner{}
-	CheckErrors(t, RunnerManager{errRunner, RunTeardownRunner(stub)}.Wait(context.Background()), nil)
+	CheckErrors(t, Wait(RunnerManager{errRunner, RunTeardownRunner(stub)}), nil)
 	if stub.run || !stub.teardown {
 		t.Errorf(errString, "stop", stub.run, stub.teardown, false, true)
 	}
 }
+
+func TestNoop(t *testing.T) { CheckErrors(t, noop(), nil) }
