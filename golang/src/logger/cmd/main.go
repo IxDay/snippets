@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"logger"
 )
 
@@ -58,4 +59,13 @@ func main() {
 	l.Log(logger.INFO, "info log level")
 	l.Log(logger.WARN, "warn log level")
 	l.Log(logger.ERROR, "error log level")
+
+	fmt.Printf("\nhijack stdlib log:\n")
+	logger.LogPatchers = append(
+		logger.LogPatchers, logger.WriterFunc(func(p []byte) (int, error) {
+			logger.PrefixLevelLogger("stdlib", logger.ERROR, logger.Std).Log(logger.ERROR, "%s", p)
+			return len(p), nil
+		}),
+	)
+	log.Printf("error log level")
 }
