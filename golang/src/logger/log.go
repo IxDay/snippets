@@ -52,6 +52,17 @@ func init() {
 	}))
 }
 
+func LoggerWriter(mark int, logger Logger) io.Writer {
+	return WriterFunc(func(p []byte) (int, error) {
+		logger.Log(mark, "%s", p)
+		return len(p), nil
+	})
+}
+
+func StdLogger(mark int, logger Logger) *log.Logger {
+	return log.New(LoggerWriter(mark, logger), "", 0)
+}
+
 func (wf WriterFunc) Write(p []byte) (n int, err error) { return wf(p) }
 func (lf LoggerFunc) Log(level int, format string, a ...interface{}) {
 	lf(level, format, a...)

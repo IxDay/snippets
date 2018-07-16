@@ -106,3 +106,21 @@ func TestLogPatcher(t *testing.T) {
 		buffer.Reset()
 	}
 }
+
+func TestLoggerWriter(t *testing.T) {
+	logger, buffer := helperNewLogger(t)
+	std := StdLogger(INFO, LevelLogger(BaseLogger(INFO, logger)))
+
+	entries := []struct{ in, out string }{
+		{"foo", "[INFO] foo\n"},
+		{"bar", "[INFO] bar\n"},
+	}
+
+	for _, entry := range entries {
+		std.Printf(entry.in)
+		if got := buffer.String(); got != entry.out {
+			t.Errorf("log.Printf(%q) == %q, want %q", entry.in, got, entry.out)
+		}
+		buffer.Reset()
+	}
+}
